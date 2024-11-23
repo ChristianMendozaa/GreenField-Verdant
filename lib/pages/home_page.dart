@@ -23,7 +23,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Predicción de Desastres'),
+        title: const Text('Greenfield'),
       ),
       drawer: const DrawerMenu(),
       body: _pages[_currentIndex],
