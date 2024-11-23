@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "253256561234",
+    "project_id": "alerta-punk",
+    "storage_bucket": "alerta-punk.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:253256561234:android:b7314d798ba8128be6e58b",
+        "android_client_info": {
+          "package_name": "com.example.alerta_punk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAnR_XPkYERBZgp_0_TmjiUa49M8-8rWCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
