@@ -31,8 +31,9 @@ class _SaveAreaPageState extends State<SaveAreaPage> {
   String? _droughtPrediction;
   String? _floodPrediction;
   String? _firePrediction;
-String? _selectedCrop;
-  Map<String, double>? _cropPredictions; // Almacenar las predicciones de cultivos
+  String? _selectedCrop;
+  Map<String, double>?
+      _cropPredictions; // Almacenar las predicciones de cultivos
 
   @override
   void initState() {
@@ -123,7 +124,8 @@ String? _selectedCrop;
         _droughtPrediction = predictions['drought'];
         _floodPrediction = predictions['flood'];
         _firePrediction = predictions['fire'];
-                _cropPredictions = _parseCropPredictions(predictions['crop']);
+        _cropPredictions =
+            predictions['crop'] as Map<String, double>?; // Cast explícito
 
         _isLoading = false;
       });
@@ -134,7 +136,8 @@ String? _selectedCrop;
       });
     }
   }
-Map<String, double> _parseCropPredictions(String? cropPrediction) {
+
+  Map<String, double> _parseCropPredictions(String? cropPrediction) {
     try {
       return cropPrediction != null
           ? Map<String, double>.from(json.decode(cropPrediction))
@@ -143,16 +146,19 @@ Map<String, double> _parseCropPredictions(String? cropPrediction) {
       return {};
     }
   }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Guardar Área de Interés')),
-      body: Padding(
+
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(title: const Text('Guardar Área de Interés')),
+    body: SingleChildScrollView( // Permitir desplazamiento
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, // Alineación a la izquierda
           children: [
-            Expanded(
-              flex: 2,
+            SizedBox(
+              height: 250, // Altura fija para el mapa
               child: GoogleMap(
                 initialCameraPosition: CameraPosition(
                   target: widget.centroid,
@@ -201,95 +207,98 @@ Map<String, double> _parseCropPredictions(String? cropPrediction) {
                 ),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: 20),
             if (_isLoading)
-              Text(
-                _statusMessage,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            if (!_isLoading &&
-                _droughtPrediction != null &&
-                _floodPrediction != null &&
-                _firePrediction != null)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Resultados:',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Detalle de sequía
-                  Text(
-                    'Sequía: Nivel $_droughtPrediction',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  Text(
-                    _getDroughtRecommendation(_droughtPrediction!),
-                    style: const TextStyle(
-                        fontSize: 14, fontStyle: FontStyle.italic),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Detalle de inundación
-                  Text(
-                    'Inundación: ${_floodPrediction == "1" ? "Alto riesgo de inundación" : "Sin riesgo de inundación"}',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  Text(
-                    _getFloodRecommendation(_floodPrediction!),
-                    style: const TextStyle(
-                        fontSize: 14, fontStyle: FontStyle.italic),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Detalle de incendios
-                  Text(
-                    'Incendios: ${_firePrediction == "1" ? "Alto riesgo de incendio" : "Bajo riesgo de incendio"}',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  Text(
-                    _getFireRecommendation(_firePrediction!),
-                    style: const TextStyle(
-                        fontSize: 14, fontStyle: FontStyle.italic),
-                  ),
-                ],
-              ),
-              const Spacer(),
-            ElevatedButton(
-              onPressed: !_isLoading && _cropPredictions != null
-                  ? () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CropPredictionPage(
-                            cropPredictions: _cropPredictions!,
-                            selectedCrop: _selectedCrop,
-                            onCropSelected: (selected) {
-                              setState(() {
-                                _selectedCrop = selected;
-                              });
-                            },
-                          ),
-                        ),
-                      );
-                    }
-                  : null,
-              child: const Text('Seleccionar Cultivo'),
-            ),
-            if (_selectedCrop != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 20),
-                child: Text(
-                  'Cultivo seleccionado: $_selectedCrop',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+              Center(
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(),
+                    const SizedBox(height: 10),
+                    Text(
+                      _statusMessage,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
+              )
+            else ...[
+              // Mostrar resultados de predicciones
+              Text(
+                'Resultados:',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-            const Spacer(),
+              const SizedBox(height: 10),
+
+              // Detalle de sequía
+              Text(
+                'Sequía: Nivel $_droughtPrediction',
+                style: const TextStyle(fontSize: 14),
+              ),
+              Text(
+                _getDroughtRecommendation(_droughtPrediction!),
+                style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 10),
+
+              // Detalle de inundación
+              Text(
+                'Inundación: ${_floodPrediction == "1" ? "Alto riesgo de inundación" : "Sin riesgo de inundación"}',
+                style: const TextStyle(fontSize: 14),
+              ),
+              Text(
+                _getFloodRecommendation(_floodPrediction!),
+                style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 10),
+
+              // Detalle de incendios
+              Text(
+                'Incendios: ${_firePrediction == "1" ? "Alto riesgo de incendio" : "Bajo riesgo de incendio"}',
+                style: const TextStyle(fontSize: 14),
+              ),
+              Text(
+                _getFireRecommendation(_firePrediction!),
+                style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: _cropPredictions != null && _cropPredictions!.isNotEmpty
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CropPredictionPage(
+                              cropPredictions: _cropPredictions!,
+                              selectedCrop: _selectedCrop,
+                              onCropSelected: (selected) {
+                                setState(() {
+                                  _selectedCrop = selected;
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                      }
+                    : null,
+                child: const Text('Seleccionar Cultivo'),
+              ),
+              if (_selectedCrop != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Text(
+                    'Cultivo seleccionado: $_selectedCrop',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: !_isLoading &&
                       _droughtPrediction != null &&
@@ -301,8 +310,10 @@ Map<String, double> _parseCropPredictions(String? cropPrediction) {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Future<void> _saveToDatabase() async {
     if (_areaName.isEmpty) {
@@ -334,6 +345,12 @@ Map<String, double> _parseCropPredictions(String? cropPrediction) {
       'droughtPrediction': _droughtPrediction,
       'floodPrediction': _floodPrediction,
       'firePrediction': _firePrediction,
+      'selectedCrop': _selectedCrop, // Cultivo seleccionado
+      'cropProbability': _cropPredictions != null && _selectedCrop != null
+          ? (_cropPredictions![_selectedCrop] != null
+              ? (_cropPredictions![_selectedCrop]! * 100).toStringAsFixed(2)
+              : null)
+          : null, // Probabilidad del cultivo seleccionado
       'createdAt': Timestamp.now(),
     };
 

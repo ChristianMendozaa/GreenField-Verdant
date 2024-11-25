@@ -91,7 +91,9 @@ class _AreaDetailPageState extends State<AreaDetailPage> {
     final droughtPrediction = widget.area['droughtPrediction'] as String?;
     final floodPrediction = widget.area['floodPrediction'] as String?;
     final firePrediction = widget.area['firePrediction'] as String?;
-
+    final selectedCrop = widget.area['selectedCrop'] as String?;
+    final cropProbability = widget.area['cropProbability'] as String?;
+print("cultivo: $selectedCrop");
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.area['name']),
@@ -143,9 +145,9 @@ class _AreaDetailPageState extends State<AreaDetailPage> {
             const SizedBox(height: 20),
 
             // Predicción de sequía
-            Text(
+            const Text(
               'Predicción de Sequía:',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(
               droughtPrediction != null
@@ -156,9 +158,9 @@ class _AreaDetailPageState extends State<AreaDetailPage> {
             const SizedBox(height: 20),
 
             // Predicción de inundación
-            Text(
+            const Text(
               'Predicción de Inundación:',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(
               floodPrediction != null
@@ -166,9 +168,12 @@ class _AreaDetailPageState extends State<AreaDetailPage> {
                   : 'No hay datos de predicción de inundación.',
               style: const TextStyle(fontSize: 16),
             ),
-            Text(
+            const SizedBox(height: 20),
+
+            // Predicción de incendios
+            const Text(
               'Predicción de Incendios:',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(
               firePrediction != null
@@ -177,7 +182,31 @@ class _AreaDetailPageState extends State<AreaDetailPage> {
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 20),
-                        ElevatedButton(
+
+            // Detalle del cultivo seleccionado
+            if (selectedCrop != null && selectedCrop.isNotEmpty) ...[
+              const Text(
+                'Cultivo Seleccionado:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                selectedCrop,
+                style: const TextStyle(fontSize: 16),
+              ),
+              if (cropProbability != null)
+                Text(
+                  'Probabilidad: $cropProbability%',
+                  style: const TextStyle(fontSize: 16),
+                ),
+            ] else
+              const Text(
+                'No hay datos de cultivo seleccionado.',
+                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+              ),
+            const SizedBox(height: 20),
+
+            // Botón de abrir chat
+            ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,

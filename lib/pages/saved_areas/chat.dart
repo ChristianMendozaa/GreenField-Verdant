@@ -53,37 +53,44 @@ class _ChatScreenState extends State<ChatScreen> {
     return closestColorName;
   }
 
-  String _generateContextPrompt(Map<String, dynamic> area) {
-    final Color color = area['color'];
-    final String colorName = _getColorName(color); // Usa el nombre del color.
+ String _generateContextPrompt(Map<String, dynamic> area) {
+  final Color color = area['color'];
+  final String colorName = _getColorName(color); // Usa el nombre del color.
 
-    final floodPrediction = area['floodPrediction'] == "1"
-        ? "Se espera inundación en esta área."
-        : "No se espera inundación en esta área.";
-    final droughtPrediction = area['droughtPrediction'];
-    final droughtLevel = int.tryParse(droughtPrediction ?? "0") ?? 0;
-    final droughtDescription = droughtLevel == 0
-        ? "Sin sequía."
-        : droughtLevel == 5
-            ? "Sequía extrema."
-            : "Nivel de sequía: $droughtLevel.";
-    final firePrediction = area['firePrediction'] ?? "0";
-    final fireArea = double.tryParse(firePrediction) ?? 0.0;
-    final fireDescription = fireArea > 0
-        ? "Área estimada afectada por incendios: ${fireArea.toStringAsFixed(2)} m²."
-        : "No se espera afectación por incendios.";
+  final floodPrediction = area['floodPrediction'] == "1"
+      ? "Se espera inundación en esta área."
+      : "No se espera inundación en esta área.";
+  final droughtPrediction = area['droughtPrediction'];
+  final droughtLevel = int.tryParse(droughtPrediction ?? "0") ?? 0;
+  final droughtDescription = droughtLevel == 0
+      ? "Sin sequía."
+      : droughtLevel == 5
+          ? "Sequía extrema."
+          : "Nivel de sequía: $droughtLevel.";
+  final firePrediction = area['firePrediction'] ?? "0";
+  final fireArea = double.tryParse(firePrediction) ?? 0.0;
+  final fireDescription = fireArea > 0
+      ? "Área estimada afectada por incendios: ${fireArea.toStringAsFixed(2)} m²."
+      : "No se espera afectación por incendios.";
 
-    return """
+  final selectedCrop = area['selectedCrop'] ?? "No seleccionado.";
+  final cropProbability = area['cropProbability'] != null
+      ? "${area['cropProbability']}%"
+      : "Probabilidad no disponible.";
+
+  return """
 Eres un asistente que ayuda a los usuarios agricultores con información detallada sobre un área específica. Esta es la información del área:
 - Nombre: ${area['name']}
 - Color asociado: $colorName
 - Predicción de inundaciones: $floodPrediction
 - Predicción de sequías: $droughtDescription
 - Predicción de incendios: $fireDescription
+- Cultivo seleccionado: $selectedCrop
+- Probabilidad de éxito del cultivo: $cropProbability
 
-Usa esta información para responder preguntas del usuario sobre el área y sus posibles riesgos.
+Usa esta información para responder preguntas del usuario sobre el área, sus posibles riesgos y la viabilidad del cultivo seleccionado.
 """;
-  }
+}
 
   Future<void> _sendMessage(String message) async {
     if (message.isEmpty) return;
