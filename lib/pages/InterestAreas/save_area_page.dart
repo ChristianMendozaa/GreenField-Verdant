@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:ui' as ui;
+import 'package:alerta_punk/pages/InterestAreas/CropPredictionPage.dart';
 import 'package:alerta_punk/pages/InterestAreas/make_predicction.dart';
 import 'package:alerta_punk/pages/home_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -29,6 +31,8 @@ class _SaveAreaPageState extends State<SaveAreaPage> {
   String? _droughtPrediction;
   String? _floodPrediction;
   String? _firePrediction;
+String? _selectedCrop;
+  Map<String, double>? _cropPredictions; // Almacenar las predicciones de cultivos
 
   @override
   void initState() {
@@ -119,6 +123,8 @@ class _SaveAreaPageState extends State<SaveAreaPage> {
         _droughtPrediction = predictions['drought'];
         _floodPrediction = predictions['flood'];
         _firePrediction = predictions['fire'];
+                _cropPredictions = _parseCropPredictions(predictions['crop']);
+
         _isLoading = false;
       });
     } catch (e) {
@@ -128,7 +134,15 @@ class _SaveAreaPageState extends State<SaveAreaPage> {
       });
     }
   }
-
+Map<String, double> _parseCropPredictions(String? cropPrediction) {
+    try {
+      return cropPrediction != null
+          ? Map<String, double>.from(json.decode(cropPrediction))
+          : {};
+    } catch (e) {
+      return {};
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -243,6 +257,37 @@ class _SaveAreaPageState extends State<SaveAreaPage> {
                         fontSize: 14, fontStyle: FontStyle.italic),
                   ),
                 ],
+              ),
+              const Spacer(),
+            ElevatedButton(
+              onPressed: !_isLoading && _cropPredictions != null
+                  ? () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CropPredictionPage(
+                            cropPredictions: _cropPredictions!,
+                            selectedCrop: _selectedCrop,
+                            onCropSelected: (selected) {
+                              setState(() {
+                                _selectedCrop = selected;
+                              });
+                            },
+                          ),
+                        ),
+                      );
+                    }
+                  : null,
+              child: const Text('Seleccionar Cultivo'),
+            ),
+            if (_selectedCrop != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: Text(
+                  'Cultivo seleccionado: $_selectedCrop',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             const Spacer(),
             ElevatedButton(
