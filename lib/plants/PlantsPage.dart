@@ -1,4 +1,5 @@
 import 'package:alerta_punk/plants/AddPlantPage.dart';
+import 'package:alerta_punk/plants/PlantDetailPage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -70,6 +71,14 @@ class _PlantsPageState extends State<PlantsPage> {
                           width: 50, height: 50, fit: BoxFit.cover),
                       title: Text(plant['name']),
                       subtitle: Text('Predicción: ${plant['prediction']}'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PlantDetailPage(plant: plant),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

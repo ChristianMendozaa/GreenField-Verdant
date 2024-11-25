@@ -44,6 +44,8 @@ class _SavedPageState extends State<SavedPage> {
               data['droughtPrediction'], // Incluye la predicción de sequía
           'floodPrediction':
               data['floodPrediction'], // Incluye la predicción de inundación
+          'selectedCrop': data['selectedCrop'],
+          'cropProbability': data['cropProbability'],
         };
       }).toList();
     } catch (e) {
