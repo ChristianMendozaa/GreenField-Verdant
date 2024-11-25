@@ -1,5 +1,6 @@
 import 'package:alerta_punk/pages/InterestAreas/add_interest_area_page.dart';
 import 'package:alerta_punk/pages/dashboard_page.dart';
+import 'package:alerta_punk/plants/PlantsPage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -95,6 +96,17 @@ class _DrawerMenuState extends State<DrawerMenu> {
                 context,
                 MaterialPageRoute(
                     builder: (context) => const AddInterestAreaPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.map),
+            title: const Text('Mis Plantas'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const PlantsPage()),
               );
             },
           ),
