@@ -110,7 +110,8 @@ class _MapPageState extends State<MapPage> {
       final String droughtPrediction = data['droughtPrediction'] ?? '';
       final String floodPrediction = data['floodPrediction'] ?? '';
       final String firePrediction = data['firePrediction'] ?? '';
-
+    final String crop = data['selectedCrop'] ?? '';
+      final String cropProbability = data['cropProbability'] ?? '';
       final color = Color(int.parse('0xff$colorHex'));
 
       final List<LatLng> points = pointsData
@@ -147,6 +148,9 @@ class _MapPageState extends State<MapPage> {
                 floodPrediction: floodPrediction,
                 firePrediction: firePrediction,
                 area: _calculateArea(points),
+                selectedCrop: crop,
+                cropProbability: cropProbability,
+
               );
             },
           ),
@@ -174,6 +178,8 @@ class _MapPageState extends State<MapPage> {
   required String floodPrediction,
   required String firePrediction,
   required double area,
+  String? selectedCrop, // Cultivo seleccionado
+  String? cropProbability, // Probabilidad del cultivo
 }) {
   showDialog(
     context: context,
@@ -245,6 +251,31 @@ class _MapPageState extends State<MapPage> {
                     : 'No hay datos de predicción de incendios.',
                 style: const TextStyle(fontSize: 16),
               ),
+              const SizedBox(height: 10),
+
+              // Detalle de cultivo seleccionado
+              if (selectedCrop != null && selectedCrop.isNotEmpty) ...[
+                const Text(
+                  'Cultivo Seleccionado:',
+                  style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  selectedCrop,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 5),
+                if (cropProbability != null)
+                  Text(
+                    'Probabilidad: ${cropProbability}%',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                const SizedBox(height: 10),
+              ] else
+                const Text(
+                  'No hay datos de cultivo seleccionado.',
+                  style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                ),
             ],
           ),
         ),
@@ -260,6 +291,7 @@ class _MapPageState extends State<MapPage> {
     },
   );
 }
+
 
 
   double _calculateArea(List<LatLng> points) {

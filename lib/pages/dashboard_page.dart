@@ -74,24 +74,24 @@ class _DashboardPageState extends State<DashboardPage> {
                       _buildTitle('Riesgos de Inundación'),
                       _buildFloodChart(),
                       const SizedBox(height: 20),
-                      _buildTitle('Áreas posibles a quemarse en caso de incendio'),
+                      _buildTitle(
+                          'Áreas posibles a quemarse en caso de incendio'),
                       _buildFireMap(),
+                      
                       const SizedBox(height: 20),
-                      _buildTitle('Inundaciones vs Sequias'),
-                      _buildPieChart(),
+                      _buildTitle('Distribución de Cultivos por Color'),
+                      _buildBarChartCropProbabilities(
+                          ),
+                      _buildPieChartByColor(),
+                      const SizedBox(height: 20),
+                      _buildTitle('Probabilidades de Cultivos'),
+                      _buildBarChartCropProbabilities(),
+                      const SizedBox(height: 20),
+                      _buildTitle('Correlación Humedad vs Probabilidad'),
+                      _buildScatterChartHumidityGrowth(),
                     ],
                   ),
                 ),
-    );
-  }
-
-  Widget _buildTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
     );
   }
 
@@ -160,6 +160,12 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+// Método auxiliar para generar colores aleatorios basados en hash
+  Color _getRandomColor(int hash) {
+    final random = hash % 0xFFFFFF;
+    return Color(0xFF000000 + random).withOpacity(1.0);
+  }
+
   // Gráfico de Promedio de Sequías (0-5)
   Widget _buildDroughtBarChart() {
     return SizedBox(
@@ -187,6 +193,147 @@ class _DashboardPageState extends State<DashboardPage> {
             bottomTitles: AxisTitles(
               axisNameWidget: const Text('Áreas'),
               sideTitles: SideTitles(showTitles: true),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  // Gráfico de pastel para la distribución de cultivos
+  Widget _buildPieChartByColor() {
+    final Map<String, int> cropCounts = {};
+    for (var area in _userAreas) {
+      final crop = area['selectedCrop'] ?? 'Sin Cultivo';
+      cropCounts[crop] = (cropCounts[crop] ?? 0) + 1;
+    }
+
+    final sections = cropCounts.entries.map((entry) {
+      return PieChartSectionData(
+        value: entry.value.toDouble(),
+        title: '${entry.key}\n(${entry.value})',
+        color: _getRandomColor(entry.key.hashCode),
+      );
+    }).toList();
+
+    return SizedBox(
+      height: 300,
+      child: Card(
+        elevation: 4,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: PieChart(
+            PieChartData(
+              sections: sections,
+              centerSpaceRadius: 50,
+              sectionsSpace: 4,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Gráfico de barras para las probabilidades de cultivos
+  Widget _buildBarChartCropProbabilities() {
+    final List<BarChartGroupData> barGroups = [];
+    int index = 0;
+
+    for (var area in _userAreas) {
+      final crop = area['selectedCrop'] ?? 'Sin Cultivo';
+      final probability =
+          double.tryParse(area['cropProbability'] ?? '0') ?? 0.0;
+
+      barGroups.add(BarChartGroupData(
+        x: index,
+        barRods: [
+          BarChartRodData(
+            toY: probability,
+            color: _getRandomColor(crop.hashCode),
+          ),
+        ],
+        showingTooltipIndicators: [0],
+      ));
+      index++;
+    }
+
+    return SizedBox(
+      height: 300,
+      child: Card(
+        elevation: 4,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: BarChart(
+            BarChartData(
+              barGroups: barGroups,
+              titlesData: FlTitlesData(
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: true),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      final index = value.toInt();
+                      if (index >= 0 && index < _userAreas.length) {
+                        return Text(
+                          _userAreas[index]['selectedCrop'] ?? '',
+                          style: const TextStyle(fontSize: 10),
+                          textAlign: TextAlign.center,
+                        );
+                      }
+                      return const Text('');
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Gráfico de dispersión para la correlación humedad vs probabilidad
+  Widget _buildScatterChartHumidityGrowth() {
+    final List<ScatterSpot> spots = [];
+    for (var area in _userAreas) {
+      final humidity =
+          double.tryParse(area['humidity']?.toString() ?? '0') ?? 0.0;
+      final probability =
+          double.tryParse(area['cropProbability']?.toString() ?? '0') ?? 0.0;
+
+      spots.add(ScatterSpot(humidity, probability));
+    }
+
+    return SizedBox(
+      height: 300,
+      child: Card(
+        elevation: 4,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ScatterChart(
+            ScatterChartData(
+              scatterSpots: spots,
+              gridData: FlGridData(show: true),
+              titlesData: FlTitlesData(
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: true),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: true),
+                ),
+              ),
             ),
           ),
         ),
@@ -253,7 +400,8 @@ class _DashboardPageState extends State<DashboardPage> {
             position: LatLng(centroidLat, centroidLng),
             infoWindow: InfoWindow(
               title: area['name'],
-              snippet: 'Área posible a quemarse: ${fireArea.toStringAsFixed(1)} ha',
+              snippet:
+                  'Área posible a quemarse: ${fireArea.toStringAsFixed(1)} ha',
             ),
           );
         }).toSet(),

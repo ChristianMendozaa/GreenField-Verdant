@@ -277,7 +277,7 @@ String _parseDroughtResponse(Map<String, dynamic> response) {
     return "Error al interpretar la predicción de sequía";
   }
 }
-Future<String> fetchCropPrediction(double latitude, double longitude) async {
+Future<Map<String, double>> fetchCropPrediction(double latitude, double longitude) async {
   try {
     // 1. Obtener datos de la API de la NASA
     Map<String, dynamic> nasaData = await fetchNasaData(latitude, longitude);
@@ -323,25 +323,26 @@ Future<String> fetchCropPrediction(double latitude, double longitude) async {
     if (response.statusCode == 200) {
       Map<String, dynamic> result = json.decode(response.body);
 
-      // Extraer el cultivo con la mayor probabilidad
-      var maxEntry = result.entries.reduce((a, b) => a.value > b.value ? a : b);
-      String cropName = maxEntry.key;
-      double cropProbability = maxEntry.value * 100;
+      // Convertir las probabilidades a un mapa de String -> Double
+      Map<String, double> cropPredictions = result.map((key, value) =>
+          MapEntry(key, value is double ? value : double.parse(value.toString())));
 
-      return "Cultivo recomendado: $cropName (${cropProbability.toStringAsFixed(2)}% de probabilidad)";
+      debugPrint("Predicciones de cultivos recibidas: $cropPredictions");
+
+      return cropPredictions;
     } else {
       throw Exception("Error al obtener la predicción de cultivos: ${response.statusCode}");
     }
   } catch (e) {
     debugPrint("Error durante la predicción de cultivos: $e");
-    return "Error durante la predicción de cultivos: $e";
+    return {};
   }
 }
 
   // General prediction logic
 
-Future<Map<String, String>> makePredictions(
-    double latitude, double longitude) async {
+Future<Map<String, dynamic>> makePredictions(double latitude, double longitude) async {
+
   // Inicializa modelos
   await initializeModels();
 
@@ -414,7 +415,7 @@ Future<Map<String, String>> makePredictions(
   String droughtPrediction = droughtResponse.statusCode == 200
     ? _parseDroughtResponse(json.decode(droughtResponse.body))
     : 'Error al predecir sequía';
-  String cropPrediction = await fetchCropPrediction(latitude, longitude);
+  Map<String,double > cropPrediction = await fetchCropPrediction(latitude, longitude);
 
   String floodPrediction = await fetchFloodPrediction(latitude, longitude);
 
@@ -424,12 +425,13 @@ Future<Map<String, String>> makePredictions(
   debugPrint("Predicción de incendio: $firePrediction");
   debugPrint("Predicción de inundación: $floodPrediction");
   debugPrint("Predicción de sequía: $droughtPrediction");
+  debugPrint("Predicción de crop: $cropPrediction");
 
   return {
     'drought': droughtPrediction,
     'flood': floodPrediction,
     'fire': firePrediction,
-    'crop': cropPrediction,
+    'crop': cropPrediction, // Como JSON para representarlo como string
 
   };
 }
