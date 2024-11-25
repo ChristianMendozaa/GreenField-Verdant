@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:alerta_punk/pages/saved_areas/chat.dart';
 import 'package:alerta_punk/utils/recommendation_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -176,6 +177,17 @@ class _AreaDetailPageState extends State<AreaDetailPage> {
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 20),
+                        ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(contextData: widget.area),
+                  ),
+                );
+              },
+              child: const Text("Abrir Chat Asistente"),
+            ),
           ],
         ),
       ),
