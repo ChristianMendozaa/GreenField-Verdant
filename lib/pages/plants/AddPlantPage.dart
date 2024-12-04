@@ -1,13 +1,14 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image/image.dart' as img;
+import 'package:http/http.dart' as http;
 
 class AddPlantPage extends StatefulWidget {
   const AddPlantPage({Key? key}) : super(key: key);
@@ -18,7 +19,6 @@ class AddPlantPage extends StatefulWidget {
 
 class _AddPlantPageState extends State<AddPlantPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ImagePicker _picker = ImagePicker();
 
@@ -76,17 +76,15 @@ class _AddPlantPageState extends State<AddPlantPage> {
         isLoading = true; // Mostrar indicador de carga mientras se predice
       });
 
-      // Realizar la predicción
       try {
         final prediction = await predictDisease(_imageFile!);
         setState(() {
-          predictedLabel =
-              prediction; // Actualizar el resultado de la predicción
-          isLoading = false; // Ocultar el indicador de carga
+          predictedLabel = prediction;
+          isLoading = false;
         });
       } catch (e) {
         setState(() {
-          predictedLabel = 'Error al predecir'; // Mostrar error si ocurre
+          predictedLabel = 'Error al predecir';
           isLoading = false;
         });
         print('Error durante la predicción: $e');
@@ -98,30 +96,26 @@ class _AddPlantPageState extends State<AddPlantPage> {
     final rawImage = img.decodeImage(imageFile.readAsBytesSync());
 
     if (rawImage == null) {
-      throw Exception(
-          "No se pudo decodificar la imagen. Asegúrate de que el archivo es válido.");
+      throw Exception("No se pudo decodificar la imagen.");
     }
 
     final resizedImage =
         img.copyResize(rawImage, height: inputHeight, width: inputWidth);
 
-    // Crear el buffer para almacenar los datos normalizados
     final Float32List normalizedImage =
         Float32List(resizedImage.width * resizedImage.height * 3);
     int pixelIndex = 0;
 
-    // Iterar sobre cada píxel para extraer los valores RGB
     for (int y = 0; y < resizedImage.height; y++) {
       for (int x = 0; x < resizedImage.width; x++) {
         final int pixel = resizedImage.getPixel(x, y);
-        final int r = (pixel >> 16) & 0xFF; // Extraer el canal rojo
-        final int g = (pixel >> 8) & 0xFF; // Extraer el canal verde
-        final int b = pixel & 0xFF; // Extraer el canal azul
+        final int r = (pixel >> 16) & 0xFF;
+        final int g = (pixel >> 8) & 0xFF;
+        final int b = pixel & 0xFF;
 
-        // Normalizar los valores y almacenarlos en el buffer
-        normalizedImage[pixelIndex++] = r / 255.0; // Normalizar el canal rojo
-        normalizedImage[pixelIndex++] = g / 255.0; // Normalizar el canal verde
-        normalizedImage[pixelIndex++] = b / 255.0; // Normalizar el canal azul
+        normalizedImage[pixelIndex++] = r / 255.0;
+        normalizedImage[pixelIndex++] = g / 255.0;
+        normalizedImage[pixelIndex++] = b / 255.0;
       }
     }
 
@@ -130,44 +124,30 @@ class _AddPlantPageState extends State<AddPlantPage> {
 
   Future<String> predictDisease(File imageFile) async {
     try {
-      // Cargar el intérprete
       final interpreter =
           await Interpreter.fromAsset('assets/models/plant_disease.tflite');
 
-      // Asignar tensores
       interpreter.allocateTensors();
 
-      // Obtener detalles de entrada y salida
       final inputDetails = interpreter.getInputTensor(0);
       final outputDetails = interpreter.getOutputTensor(0);
 
-      // Dimensiones de entrada del modelo
       final inputHeight = inputDetails.shape[1];
       final inputWidth = inputDetails.shape[2];
-      final inputChannels = inputDetails.shape[3];
 
-      print("Dimensiones de entrada: ${inputDetails.shape}");
-      print("Dimensiones de salida: ${outputDetails.shape}");
-
-      // Preprocesar la imagen
       final inputImage = preprocessImage(imageFile, inputHeight, inputWidth);
 
-      // Ajustar la dimensión del batch (Tensor NHWC: [1, height, width, channels])
       final reshapedInput = inputImage.buffer
           .asFloat32List()
           .reshape([1, inputHeight, inputWidth, 3]);
 
-      // Crear un buffer para la salida con forma [1, 52]
       final outputBuffer =
           List.generate(1, (_) => List.filled(outputDetails.shape[1], 0.0));
 
-      // Ejecutar el modelo
       interpreter.run(reshapedInput, outputBuffer);
 
-      // Cerrar el intérprete para liberar recursos
       interpreter.close();
 
-      // Obtener la clase con mayor probabilidad
       final predictedClassIndex = outputBuffer[0]
           .indexOf(outputBuffer[0].reduce((a, b) => a > b ? a : b));
 
@@ -175,6 +155,23 @@ class _AddPlantPageState extends State<AddPlantPage> {
     } catch (e) {
       print('Error durante la predicción: $e');
       return 'Error al predecir';
+    }
+  }
+
+  Future<String> uploadToImgBB(File imageFile) async {
+    const apiKey = "2c68fb0d7ff2f04835d1da3cf672e0a3";
+    final url = "https://api.imgbb.com/1/upload?key=$apiKey";
+    final request = http.MultipartRequest('POST', Uri.parse(url));
+    request.files
+        .add(await http.MultipartFile.fromPath('image', imageFile.path));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(await response.stream.bytesToString());
+      return responseData['data']['url'];
+    } else {
+      throw Exception("Error al subir la imagen a ImgBB");
     }
   }
 
@@ -194,12 +191,7 @@ class _AddPlantPageState extends State<AddPlantPage> {
       final user = _auth.currentUser;
       if (user == null) throw 'Usuario no autenticado';
 
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final storageRef =
-          _storage.ref().child('plants').child(user.uid).child(fileName);
-      await storageRef.putFile(_imageFile!);
-
-      final imageUrl = await storageRef.getDownloadURL();
+      final imageUrl = await uploadToImgBB(_imageFile!);
       final prediction = await predictDisease(_imageFile!);
 
       await _firestore.collection('plants').add({

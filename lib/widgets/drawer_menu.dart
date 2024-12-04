@@ -100,7 +100,7 @@ class _DrawerMenuState extends State<DrawerMenu> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.map),
+            leading: const Icon(Icons.local_florist), // Icono para plantas
             title: const Text('Mis Plantas'),
             onTap: () {
               Navigator.push(
@@ -110,7 +110,7 @@ class _DrawerMenuState extends State<DrawerMenu> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.map),
+            leading: const Icon(Icons.agriculture), // Icono para cultivos
             title: const Text('Mis Cultivos'),
             onTap: () {
               Navigator.push(

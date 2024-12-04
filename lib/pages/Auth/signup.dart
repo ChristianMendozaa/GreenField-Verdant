@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 import 'package:alerta_punk/Controllers/Auth/SignUpController.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -40,6 +42,23 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
+  Future<String> uploadToImgBB(File imageFile) async {
+    const apiKey = "2c68fb0d7ff2f04835d1da3cf672e0a3";
+    final url = "https://api.imgbb.com/1/upload?key=$apiKey";
+    final request = http.MultipartRequest('POST', Uri.parse(url));
+    request.files
+        .add(await http.MultipartFile.fromPath('image', imageFile.path));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(await response.stream.bytesToString());
+      return responseData['data']['url'];
+    } else {
+      throw Exception("Error al subir la imagen a ImgBB");
+    }
+  }
+
   Future<void> onSignUp() async {
     final email = emailController.text;
     final password = passwordController.text;
@@ -51,7 +70,15 @@ class _SignUpPageState extends State<SignUpPage> {
       });
 
       try {
-        await signUpController.signUp(name, email, password, profileImage);
+        String? imageUrl;
+        if (profileImage != null) {
+          // Subir la imagen a ImgBB
+          imageUrl = await uploadToImgBB(profileImage!);
+        }
+
+        // Llamar al controlador para registrar al usuario
+        await signUpController.signUp(name, email, password, imageUrl);
+
         Navigator.pushReplacementNamed(context, '/login');
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
