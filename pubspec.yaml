@@ -80,6 +80,7 @@ flutter:
     - assets/models/fire_area_model_optimized.tflite
     - assets/models/flood_prediction_model.tflite
     - assets/models/plant_disease.tflite
+    - assets/models/crop_clasification.tflite
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
