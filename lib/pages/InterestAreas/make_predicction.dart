@@ -312,7 +312,7 @@ Future<Map<String, double>> fetchCropPrediction(double latitude, double longitud
     debugPrint("Datos preparados para predicción de cultivos: $inputData");
 
     // 4. Enviar datos al servidor Flask
-    final url = Uri.parse('https://web-production-8ca2.up.railway.app/predecirCrop');
+    final url = Uri.parse('https://web-production-25ec5.up.railway.app//predecirCrop');
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -405,7 +405,7 @@ Future<Map<String, dynamic>> makePredictions(double latitude, double longitude) 
 
   // Enviar datos al servidor de predicción de sequía
   final droughtResponse = await http.post(
-    Uri.parse('https://web-production-8ca2.up.railway.app/predecirDrought'),
+    Uri.parse('https://web-production-25ec5.up.railway.app//predecirDrought'),
     headers: {"Content-Type": "application/json"},
     body: json.encode({'input': droughtDataStandard}),
   );
